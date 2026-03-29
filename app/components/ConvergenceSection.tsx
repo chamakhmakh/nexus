@@ -126,7 +126,7 @@ export default function ConvergenceSection() {
           trigger: wrapperRef.current,
           start: "top top",
           end: "+=700%",
-          scrub: false,
+          scrub: true,
           pin: true,
           anticipatePin: 1,
         },
@@ -351,7 +351,7 @@ export default function ConvergenceSection() {
           >
             Seconds remaining as a limited human
           </span>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 px-6">
             <div
               style={{
                 width: "clamp(20px, 4vw, 40px)",
@@ -384,7 +384,7 @@ export default function ConvergenceSection() {
         <div
           className="absolute left-1/2 flex flex-col items-center z-10"
           style={{
-            bottom: "clamp(60px, 10vh, 100px)",
+            bottom: "clamp(30px, 6vh, 70px)",
             transform: "translateX(-50%)",
             gap: "clamp(2px, 0.5vw, 6px)",
           }}
@@ -393,7 +393,7 @@ export default function ConvergenceSection() {
             ref={evolveRef}
             className="font-serif italic text-center"
             style={{
-              fontSize: "clamp(32px, 7vw, 80px)",
+              fontSize: "clamp(24px, 5vw, 56px)",
               fontWeight: 300,
               color: "var(--gold)",
               letterSpacing: "0.06em",

@@ -54,7 +54,7 @@ export default function ProblemSection() {
           trigger: wrapperRef.current,
           start: "top top",
           end: "+=400%",
-          scrub: false,
+          scrub: true,
           pin: true,
           anticipatePin: 1,
         },
