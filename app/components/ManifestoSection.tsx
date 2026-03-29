@@ -1,106 +1,93 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useEffect, useRef } from "react";
 
 gsap.registerPlugin(ScrollTrigger);
 
 const lines = [
   {
     text: "We do not believe",
-    size: "clamp(40px, 6vw, 88px)",
+    size: "clamp(36px, 6vw, 88px)",
     gold: false,
-    weight: 300,
     italic: false,
     align: "left",
   },
   {
     text: "in limits.",
-    size: "clamp(48px, 7.5vw, 110px)",
+    size: "clamp(48px, 8vw, 110px)",
     gold: true,
-    weight: 300,
     italic: true,
     align: "left",
   },
   {
     text: "We believe limits",
-    size: "clamp(18px, 2.2vw, 32px)",
+    size: "clamp(16px, 2.2vw, 32px)",
     gold: false,
-    weight: 300,
     italic: false,
     align: "right",
   },
   {
     text: "believe in us.",
-    size: "clamp(18px, 2.2vw, 32px)",
+    size: "clamp(16px, 2.2vw, 32px)",
     gold: false,
-    weight: 300,
     italic: true,
     align: "right",
   },
   {
     text: "Every ceiling is someone else's floor.",
-    size: "clamp(14px, 1.4vw, 20px)",
+    size: "clamp(12px, 1.4vw, 20px)",
     gold: false,
-    weight: 300,
     italic: false,
     align: "center",
   },
   {
     text: "We built the elevator.",
-    size: "clamp(36px, 5vw, 72px)",
+    size: "clamp(30px, 5vw, 72px)",
     gold: true,
-    weight: 300,
     italic: true,
     align: "center",
   },
   {
     text: "NEXUS is not a product.",
-    size: "clamp(28px, 3.5vw, 52px)",
+    size: "clamp(22px, 3.5vw, 52px)",
     gold: false,
-    weight: 300,
     italic: false,
     align: "left",
   },
   {
     text: "NEXUS is a decision.",
-    size: "clamp(40px, 6vw, 88px)",
+    size: "clamp(36px, 6vw, 88px)",
     gold: true,
-    weight: 300,
     italic: true,
     align: "left",
   },
 ];
 
-const ManifestoSection = () => {
+export default function ManifestoSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
-  const linesRef = useRef<(HTMLDivElement | null)[]>([]);
+  const lineRefs = useRef<(HTMLDivElement | null)[]>([]);
   const dividerRef = useRef<HTMLDivElement>(null);
   const logoRef = useRef<HTMLDivElement>(null);
   const wordRefs = useRef<(HTMLSpanElement | null)[][]>([]);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      // Set initial state
-      linesRef.current.forEach((l) => {
-        if (!l) return;
-        const words = l.querySelectorAll(".manifesto-word");
+      // Hide all words initially
+      lineRefs.current.forEach((line) => {
+        if (!line) return;
+        const words = line.querySelectorAll(".manifesto-word");
         gsap.set(words, { y: "110%", autoAlpha: 0 });
       });
-
       gsap.set(dividerRef.current, {
         scaleX: 0,
-        transformOrigin: "left center",
+        transformOrigin: "center",
         autoAlpha: 0,
       });
+      gsap.set(logoRef.current, { autoAlpha: 0, y: 40 });
 
-      gsap.set(logoRef.current, {
-        autoAlpha: 0,
-        y: 40,
-      });
-
-      // Sceme label
+      // Scene label
       gsap.from(".manifesto-label", {
         autoAlpha: 0,
         y: -10,
@@ -112,11 +99,10 @@ const ManifestoSection = () => {
         },
       });
 
-      // Animation each line on scroll
-      linesRef.current.forEach((l) => {
-        if (!l) return;
-        const words = l.querySelectorAll(".manifesto-word");
-
+      // Each line reveals on scroll
+      lineRefs.current.forEach((line) => {
+        if (!line) return;
+        const words = line.querySelectorAll(".manifesto-word");
         gsap.to(words, {
           y: "0%",
           autoAlpha: 1,
@@ -124,14 +110,14 @@ const ManifestoSection = () => {
           stagger: 0.07,
           ease: "expo.out",
           scrollTrigger: {
-            trigger: l,
-            start: "top 85%",
+            trigger: line,
+            start: "top 88%",
             toggleActions: "play none none none",
           },
         });
       });
 
-      // Divider line
+      // Divider
       gsap.to(dividerRef.current, {
         scaleX: 1,
         autoAlpha: 1,
@@ -139,12 +125,12 @@ const ManifestoSection = () => {
         ease: "power3.inOut",
         scrollTrigger: {
           trigger: dividerRef.current,
-          start: "top 85%",
+          start: "top 88%",
           toggleActions: "play none none none",
         },
       });
 
-      // Logo reveal
+      // Logo
       gsap.to(logoRef.current, {
         autoAlpha: 1,
         y: 0,
@@ -152,7 +138,7 @@ const ManifestoSection = () => {
         ease: "expo.out",
         scrollTrigger: {
           trigger: logoRef.current,
-          start: "top 90%",
+          start: "top 92%",
           toggleActions: "play none none none",
         },
       });
@@ -161,14 +147,13 @@ const ManifestoSection = () => {
     return () => ctx.revert();
   }, []);
 
+  // Split line into animated word spans
   const splitWords = (text: string, lineIdx: number) => {
-    return text.split(" ").map((w, wi) => (
+    return text.split(" ").map((word, wi) => (
       <span
         key={wi}
         className="inline-block overflow-hidden"
-        style={{
-          marginRight: "0.25em",
-        }}
+        style={{ marginRight: "0.25em" }}
       >
         <span
           ref={(el) => {
@@ -177,7 +162,7 @@ const ManifestoSection = () => {
           }}
           className="manifesto-word inline-block"
         >
-          {w}
+          {word}
         </span>
       </span>
     ));
@@ -189,10 +174,10 @@ const ManifestoSection = () => {
       className="relative w-full"
       style={{
         background: "var(--black)",
-        paddingBottom: "160px",
+        paddingBottom: "clamp(80px, 12vw, 160px)",
       }}
     >
-      {/* ── Ambient glow ── */}
+      {/* Ambient glow */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
@@ -201,129 +186,132 @@ const ManifestoSection = () => {
         }}
       />
 
-      {/* ── Scene label ── */}
+      {/* ── Scene label — always one line ── */}
       <div
-        className="monifesto-label flex items-center gap-3 mb-24"
+        className="manifesto-label flex items-center gap-2"
         style={{
-          paddingTop: "120px",
-          paddingLeft: "clamp(32px, 8vw, 120px)",
+          paddingTop: "clamp(60px, 10vw, 120px)",
+          paddingLeft: "clamp(20px, 8vw, 120px)",
+          marginBottom: "clamp(40px, 8vw, 96px)",
+          whiteSpace: "nowrap",
         }}
       >
-        <div className="gold-line" />
+        <div
+          style={{
+            width: "clamp(20px, 4vw, 60px)",
+            height: 1,
+            background: "linear-gradient(90deg, transparent, var(--gold-dim))",
+          }}
+        />
         <span
           className="font-sans uppercase"
           style={{
-            fontSize: 10,
-            letterSpacing: "0.4em",
+            fontSize: "clamp(8px, 1.8vw, 10px)",
+            letterSpacing: "0.35em",
             color: "var(--gold-dim)",
+            whiteSpace: "nowrap",
           }}
         >
-          The manifestto
+          The Manifesto
         </span>
-        <div className="gold-line" />
+        <div
+          style={{
+            width: "clamp(20px, 4vw, 60px)",
+            height: 1,
+            background: "linear-gradient(90deg, var(--gold-dim), transparent)",
+          }}
+        />
       </div>
 
       {/* ── Lines ── */}
       <div
         className="relative flex flex-col"
         style={{
-          gap: "clamp()32px, 5vw, 64px",
-          paddingBottom: "90px",
+          gap: "clamp(24px, 5vw, 64px)",
+          paddingBottom: "clamp(40px, 6vw, 80px)",
         }}
       >
-        {lines.map((l, i) => {
-          const isGoldDivider = i === 4; // after line index 3, before 4
-
-          return (
-            <div key={i}>
-              {/* Gold divider between line 3 and 4 */}
-              {i === 4 && (
-                <div
-                  ref={dividerRef}
-                  className="mx-auto mb-16"
-                  style={{
-                    width: "clamp(60px, 8vw, 120px)",
-                    height: 1,
-                    background:
-                      "linear-gradient(90deg, transparent, var(--gold), transparent)",
-                  }}
-                />
-              )}
-
+        {lines.map((line, i) => (
+          <div key={i}>
+            {/* Gold divider before line 4 */}
+            {i === 4 && (
               <div
-                ref={(el) => {
-                  linesRef.current[i] = el;
-                }}
-                className="relative"
+                ref={dividerRef}
                 style={{
-                  paddingLeft:
-                    l.align === "right"
-                      ? 0
-                      : l.align === "center"
-                        ? 0
-                        : "clamp(32px, 8vw, 120px)",
-                  paddingRight:
-                    l.align === "right"
-                      ? "clamp(32px, 8vw, 120px)"
-                      : l.align === "center"
-                        ? 0
-                        : 0,
-                  textAlign: l.align as "left" | "right" | "center",
+                  margin: "clamp(16px, 4vw, 40px) auto clamp(24px, 5vw, 56px)",
+                  width: "clamp(40px, 8vw, 120px)",
+                  height: 1,
+                  background:
+                    "linear-gradient(90deg, transparent, var(--gold), transparent)",
                 }}
-              >
-                {/* Small label above big lines */}
-                {(i === 0 || i === 6) && (
-                  <div
-                    className="font-sans uppercase mb-3"
-                    style={{
-                      fontSize: 9,
-                      letterSpacing: "0.35em",
-                      color: "var(--gold-dim)",
-                      opacity: 0.6,
-                    }}
-                  >
-                    {i === 0 ? "Article I" : "Article II"}
-                  </div>
-                )}
+              />
+            )}
 
-                <p
-                  className={`font-serif leading-none ${l.italic ? "italic" : ""}`}
+            <div
+              ref={(el) => {
+                lineRefs.current[i] = el;
+              }}
+              style={{
+                paddingLeft:
+                  line.align === "left" ? "clamp(20px, 8vw, 120px)" : 0,
+                paddingRight:
+                  line.align === "right" ? "clamp(20px, 8vw, 120px)" : 0,
+                textAlign: line.align as "left" | "right" | "center",
+              }}
+            >
+              {/* Article label above first line of each block */}
+              {(i === 0 || i === 6) && (
+                <div
+                  className="font-sans uppercase"
                   style={{
-                    fontSize: l.size,
-                    fontWeight: l.weight,
-                    color: l.gold ? "var(--gold)" : "var(--cream)",
-                    lineHeight: 1.05,
-                    letterSpacing: l.gold ? "0.02em" : "0.01em",
+                    fontSize: "clamp(7px, 1vw, 9px)",
+                    letterSpacing: "0.3em",
+                    color: "var(--gold-dim)",
+                    opacity: 0.6,
+                    marginBottom: "clamp(6px, 1vw, 12px)",
+                    paddingLeft: line.align === "left" ? 0 : undefined,
                   }}
                 >
-                  {splitWords(l.text, i)}
-                </p>
-              </div>
+                  {i === 0 ? "Article I" : "Article II"}
+                </div>
+              )}
+
+              <p
+                className={`font-serif ${line.italic ? "italic" : ""}`}
+                style={{
+                  fontSize: line.size,
+                  fontWeight: 300,
+                  color: line.gold ? "var(--gold)" : "var(--cream)",
+                  lineHeight: 1.05,
+                  letterSpacing: line.gold ? "0.02em" : "0.01em",
+                }}
+              >
+                {splitWords(line.text, i)}
+              </p>
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
 
       {/* ── Bottom NEXUS logo ── */}
       <div
         ref={logoRef}
-        className="flex flex-col items-center gap-4 mt-16"
-        style={{
-          paddingBottom: "40px",
-        }}
+        className="flex flex-col items-center gap-3 sm:gap-4"
+        style={{ marginTop: "clamp(24px, 5vw, 60px)" }}
       >
         <div
           style={{
-            width: "clamp(60px, 8vw, 120px)",
+            width: "clamp(40px, 8vw, 120px)",
             height: 1,
             background:
               "linear-gradient(90deg, transparent, var(--gold), transparent)",
           }}
         />
+
         <h2
           className="font-serif gold-gradient"
           style={{
-            fontSize: "clamp(32px, 5vw, 64px)",
+            fontSize: "clamp(28px, 6vw, 64px)",
             fontWeight: 300,
             letterSpacing: "0.3em",
           }}
@@ -332,10 +320,10 @@ const ManifestoSection = () => {
         </h2>
 
         <p
-          className="font-sans uppercase"
+          className="font-sans uppercase text-center px-4"
           style={{
-            fontSize: 9,
-            letterSpacing: "0.4em",
+            fontSize: "clamp(7px, 1.2vw, 9px)",
+            letterSpacing: "clamp(0.2em, 0.4em, 0.4em)",
             color: "var(--gold-dim)",
           }}
         >
@@ -344,7 +332,7 @@ const ManifestoSection = () => {
 
         <div
           style={{
-            width: "clamp(60px, 8vw, 120px)",
+            width: "clamp(40px, 8vw, 120px)",
             height: 1,
             background:
               "linear-gradient(90deg, transparent, var(--gold), transparent)",
@@ -352,9 +340,9 @@ const ManifestoSection = () => {
         />
       </div>
 
-      {/* ── Side label ── */}
+      {/* Side label — lg only */}
       <div
-        className="absolute left-8 top-1/2"
+        className="hidden lg:block absolute left-6 top-1/2"
         style={{
           transform: "translateY(-50%) rotate(-90deg)",
           fontSize: 9,
@@ -368,6 +356,4 @@ const ManifestoSection = () => {
       </div>
     </section>
   );
-};
-
-export default ManifestoSection;
+}

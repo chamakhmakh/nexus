@@ -1,24 +1,21 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useEffect, useRef, useState } from "react";
 
 gsap.registerPlugin(ScrollTrigger);
 
 const nexusLetters = ["N", "E", "X", "U", "S"];
-
 const letterOrigins = [
-  { x: "-40vw", y: "-40vh" }, // N — top left
-  { x: "40vw", y: "-40vh" }, // E — top right
-  { x: "0vw", y: "50vh" }, // X — bottom center
-  { x: "-40vw", y: "40vh" }, // U — bottom left
-  { x: "40vw", y: "40vh" }, // S — bottom right
+  { x: "-40vw", y: "-40vh" },
+  { x: "40vw", y: "-40vh" },
+  { x: "0vw", y: "50vh" },
+  { x: "-40vw", y: "40vh" },
+  { x: "40vw", y: "40vh" },
 ];
 
-const ConvergenceSection = () => {
-  const [counter, setCounter] = useState(0);
-
+export default function ConvergenceSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const logoRef = useRef<HTMLDivElement>(null);
@@ -31,63 +28,53 @@ const ConvergenceSection = () => {
   const dimRef = useRef<HTMLDivElement>(null);
   const ekgRef = useRef<HTMLCanvasElement>(null);
 
-  // EKG canvas
+  const [counter, setCounter] = useState(0);
+
+  // ── EKG canvas ──
   useEffect(() => {
     const canvas = ekgRef.current;
     if (!canvas) return;
-
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    canvas.width = window.innerWidth;
-    canvas.height = 80;
+    const W = (canvas.width = window.innerWidth);
+    const H = (canvas.height = 60);
+    const CY = H / 2;
 
     let progress = 0;
     let running = false;
     let raf: number;
 
     const points: number[] = [];
-    const W = canvas.width;
-    const H = canvas.height;
-    const CY = H / 2;
-
-    // Build EKG path values
     for (let x = 0; x < W; x++) {
       const t = x / W;
-      if (t < 0.3)
-        points.push(CY); // flatline
-      else if (t < 0.35)
-        points.push(CY - ((t - 0.3) / 0.05) * (H * 0.35)); // small dip up
+      if (t < 0.3) points.push(CY);
+      else if (t < 0.35) points.push(CY - ((t - 0.3) / 0.05) * (H * 0.3));
       else if (t < 0.38)
-        points.push(CY - H * 0.35 + ((t - 0.35) / 0.03) * H * 0.8); // spike down
+        points.push(CY - H * 0.3 + ((t - 0.35) / 0.03) * H * 0.7);
       else if (t < 0.42)
-        points.push(CY + H * 0.45 - ((t - 0.38) / 0.04) * H * 0.9); // spike up big
+        points.push(CY + H * 0.4 - ((t - 0.38) / 0.04) * H * 0.8);
       else if (t < 0.46)
-        points.push(CY - H * 0.45 + ((t - 0.42) / 0.04) * H * 0.6); // return
+        points.push(CY - H * 0.4 + ((t - 0.42) / 0.04) * H * 0.5);
       else if (t < 0.5)
-        points.push(CY + H * 0.15 - ((t - 0.46) / 0.04) * H * 0.15); // small bump
-      else points.push(CY); // flatline again
+        points.push(CY + H * 0.1 - ((t - 0.46) / 0.04) * H * 0.1);
+      else points.push(CY);
     }
 
     const draw = () => {
       ctx.clearRect(0, 0, W, H);
       if (!running) return;
-
       const end = Math.floor(progress * W);
 
       ctx.beginPath();
       ctx.moveTo(0, points[0]);
-      for (let x = 1; x <= end && x < W; x++) {
-        ctx.lineTo(x, points[x]);
-      }
-
-      ctx.strokeStyle = `rgba(201,168,76,0.8)`;
+      for (let x = 1; x <= end && x < W; x++) ctx.lineTo(x, points[x]);
+      ctx.strokeStyle = "rgba(201,168,76,0.8)";
       ctx.lineWidth = 1.5;
       ctx.shadowColor = "rgba(201,168,76,0.6)";
       ctx.shadowBlur = 8;
       ctx.stroke();
 
-      // Leading dot
       if (end < W) {
         ctx.beginPath();
         ctx.arc(end, points[end] ?? CY, 3, 0, Math.PI * 2);
@@ -100,29 +87,19 @@ const ConvergenceSection = () => {
       if (progress <= 1) raf = requestAnimationFrame(draw);
     };
 
-    // Expose start fn
     (window as unknown as Record<string, unknown>).__nexusStartEKG = () => {
       running = true;
       progress = 0;
       draw();
     };
 
-    return () => {
-      cancelAnimationFrame(raf);
-    };
+    return () => cancelAnimationFrame(raf);
   }, []);
 
-  // Main GSAP timeline
+  // ── GSAP timeline ──
   useEffect(() => {
     const ctx = gsap.context(() => {
-      // Initial stats
-      gsap.set(
-        letterRefs.current.map(() => letterRefs.current),
-        {
-          autoAlpha: 0,
-        },
-      );
-
+      // Initial states
       letterRefs.current.forEach((el, i) => {
         gsap.set(el, {
           x: letterOrigins[i].x,
@@ -131,12 +108,16 @@ const ConvergenceSection = () => {
           scale: 2,
         });
       });
-
-      gsap.set(taglineRef.current, { autoAlpha: 0, y: 20 });
+      gsap.set(
+        [
+          taglineRef.current,
+          evolveRef.current,
+          orRef.current,
+          remainRef.current,
+        ],
+        { autoAlpha: 0, y: 30 },
+      );
       gsap.set(countdownRef.current, { autoAlpha: 0 });
-      gsap.set(evolveRef.current, { autoAlpha: 0, y: 30 });
-      gsap.set(orRef.current, { autoAlpha: 0, y: 30 });
-      gsap.set(remainRef.current, { autoAlpha: 0, y: 30 });
       gsap.set(dimRef.current, { autoAlpha: 0 });
       gsap.set(ekgRef.current, { autoAlpha: 0 });
 
@@ -159,7 +140,7 @@ const ConvergenceSection = () => {
         ease: "power2.out",
       });
 
-      // EKG line draws
+      // EKG
       tl.to(ekgRef.current, { autoAlpha: 1, duration: 0.3 }, "+=0.4").call(
         () => {
           const start = (window as unknown as Record<string, unknown>)
@@ -167,12 +148,10 @@ const ConvergenceSection = () => {
           if (typeof start === "function") (start as () => void)();
         },
       );
-
       tl.to({}, { duration: 1.4 });
-
-      // Letters converge from corners
       tl.to(ekgRef.current, { autoAlpha: 0, duration: 0.4 }, "+=0.2");
 
+      // Letters converge from corners
       letterRefs.current.forEach((el, i) => {
         tl.to(
           el,
@@ -188,33 +167,21 @@ const ConvergenceSection = () => {
         );
       });
 
-      // Gold shimmer on letters after converge
       tl.to({}, { duration: 0.8 });
 
       // Tagline
       tl.to(
         taglineRef.current,
-        {
-          autoAlpha: 1,
-          y: 0,
-          duration: 1,
-          ease: "expo.out",
-        },
+        { autoAlpha: 1, y: 0, duration: 1, ease: "expo.out" },
         "-=0.3",
       );
 
-      // Countdown appears
+      // Counter
       tl.to(
         countdownRef.current,
-        {
-          autoAlpha: 1,
-          duration: 0.6,
-          ease: "power2.out",
-        },
+        { autoAlpha: 1, duration: 0.6, ease: "power2.out" },
         "+=0.4",
       );
-
-      // Start counter
       tl.call(() => {
         let n = 0;
         const iv = setInterval(() => {
@@ -226,51 +193,29 @@ const ConvergenceSection = () => {
 
       tl.to({}, { duration: 2 });
 
-      // Fianl three words stagger in
+      // Final words
       tl.to(
         evolveRef.current,
-        {
-          autoAlpha: 1,
-          y: 0,
-          duration: 1,
-          ease: "expo.out",
-        },
+        { autoAlpha: 1, y: 0, duration: 1, ease: "expo.out" },
         "+=0.3",
       );
-
       tl.to(
         orRef.current,
-        {
-          autoAlpha: 1,
-          y: 0,
-          duration: 0.8,
-          ease: "expo.out",
-        },
+        { autoAlpha: 1, y: 0, duration: 0.8, ease: "expo.out" },
         "+=0.5",
       );
-
       tl.to(
         remainRef.current,
-        {
-          autoAlpha: 1,
-          y: 0,
-          duration: 1,
-          ease: "expo.out",
-        },
+        { autoAlpha: 1, y: 0, duration: 1, ease: "expo.out" },
         "+=0.5",
       );
 
-      // Dim overlay fades in - like end credits
+      // Dim to black
       tl.to(
         dimRef.current,
-        {
-          autoAlpha: 0.6,
-          duration: 2.5,
-          ease: "power2.inOut",
-        },
+        { autoAlpha: 0.6, duration: 2.5, ease: "power2.inOut" },
         "+=1.5",
       );
-
       tl.to({}, { duration: 2 });
     }, sectionRef);
 
@@ -282,20 +227,16 @@ const ConvergenceSection = () => {
       <div
         ref={wrapperRef}
         className="relative w-full h-screen flex flex-col items-center justify-center overflow-hidden"
-        style={{
-          background: "var(--black)",
-        }}
+        style={{ background: "var(--black)" }}
       >
-        {/* ── Dim overlay (end credits) ── */}
+        {/* Dim overlay */}
         <div
           ref={dimRef}
-          className="absolute inset-0 pointer-events-none opacity-0 z-30"
-          style={{
-            background: "var(--black)",
-          }}
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: "var(--black)", zIndex: 30, opacity: 0 }}
         />
 
-        {/* ── Ambient glow ── */}
+        {/* Ambient glow */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
@@ -304,102 +245,116 @@ const ConvergenceSection = () => {
           }}
         />
 
-        {/* ── EKG canvas ── */}
+        {/* EKG canvas — centered vertically */}
         <canvas
           ref={ekgRef}
           className="absolute pointer-events-none"
           style={{
-            bottom: "calc(50% - 40px)",
+            bottom: "calc(50% - 30px)",
             left: 0,
             width: "100%",
-            height: 50,
+            height: 60,
             zIndex: 5,
           }}
         />
 
-        {/* ── Scene label ── */}
+        {/* Scene label — always one line */}
         <div
-          className="conv-label absolute top-10 left-1/2 flex items-center gap-3 z-10"
-          style={{ transform: "translateX(-50%)" }}
+          className="conv-label absolute top-8 sm:top-10 left-1/2 flex items-center gap-2 z-10"
+          style={{ transform: "translateX(-50%)", whiteSpace: "nowrap" }}
         >
-          <div className="gold-line" />
+          <div
+            style={{
+              width: "clamp(20px, 4vw, 60px)",
+              height: 1,
+              background:
+                "linear-gradient(90deg, transparent, var(--gold-dim))",
+            }}
+          />
           <span
             className="font-sans uppercase"
             style={{
-              fontSize: 10,
-              letterSpacing: "0.4em",
+              fontSize: "clamp(8px, 1.8vw, 10px)",
+              letterSpacing: "0.35em",
               color: "var(--gold-dim)",
+              whiteSpace: "nowrap",
             }}
           >
             The Convergence
           </span>
-          <div className="gold-line" />
+          <div
+            style={{
+              width: "clamp(20px, 4vw, 60px)",
+              height: 1,
+              background:
+                "linear-gradient(90deg, var(--gold-dim), transparent)",
+            }}
+          />
         </div>
 
-        {/* ── NEXUS logo — letters converge ── */}
+        {/* NEXUS letters converging */}
         <div
           ref={logoRef}
           className="relative z-10 flex items-center"
-          style={{
-            letterSpacing: "0.15em",
-          }}
+          style={{ letterSpacing: "clamp(0.05em, 0.15em, 0.15em)" }}
         >
-          {nexusLetters.map((l, i) => (
+          {nexusLetters.map((letter, i) => (
             <span
               key={i}
               ref={(el) => {
                 letterRefs.current[i] = el;
               }}
-              className="font-serif gold-gradient inline-block"
+              className="font-serif gold-gradient"
               style={{
-                fontSize: "clamp(64px, 13vw, 160px)",
+                fontSize: "clamp(56px, 15vw, 180px)",
                 fontWeight: 300,
                 lineHeight: 1,
+                display: "inline-block",
               }}
             >
-              {l}
+              {letter}
             </span>
           ))}
         </div>
 
-        {/* ── Tagline ── */}
+        {/* Tagline */}
         <p
           ref={taglineRef}
-          className="font-serif italic relative z-10 mt-6 text-center"
+          className="font-serif italic relative z-10 text-center px-6"
           style={{
-            fontSize: "clamp(16px, 2vw, 26px)",
+            marginTop: "clamp(12px, 3vw, 28px)",
+            fontSize: "clamp(14px, 2.5vw, 28px)",
             fontWeight: 300,
             color: "var(--cream-dim)",
-            letterSpacing: "0.06em",
-            maxWidth: 600,
+            letterSpacing: "0.05em",
+            maxWidth: "min(600px, 90vw)",
           }}
         >
           The upgrade has already{" "}
-          <span
-            style={{
-              color: "var(--gold)",
-            }}
-          >
-            begun.
-          </span>
+          <span style={{ color: "var(--gold)" }}>begun.</span>
         </p>
 
-        {/* ── Counter ── */}
+        {/* Counter */}
         <div
           ref={countdownRef}
-          className="relative z-10 flex flex-col items-center mt-10"
-          style={{
-            fontSize: 8,
-            letterSpacing: "0.4em",
-            color: "var(--gold-dim)",
-            marginBottom: 6,
-          }}
+          className="relative z-10 flex flex-col items-center"
+          style={{ marginTop: "clamp(16px, 3vw, 40px)" }}
         >
-          <span>Seconds remaining as a limited human</span>
+          <span
+            className="font-sans uppercase text-center px-4"
+            style={{
+              fontSize: "clamp(7px, 1vw, 8px)",
+              letterSpacing: "0.3em",
+              color: "var(--gold-dim)",
+              marginBottom: 6,
+            }}
+          >
+            Seconds remaining as a limited human
+          </span>
           <div className="flex items-center gap-2">
             <div
               style={{
-                width: 40,
+                width: "clamp(20px, 4vw, 40px)",
                 height: 1,
                 background: "rgba(201,168,76,0.2)",
               }}
@@ -407,7 +362,7 @@ const ConvergenceSection = () => {
             <span
               className="font-serif"
               style={{
-                fontSize: "clamp(20px, 3vw, 36px)",
+                fontSize: "clamp(20px, 4vw, 40px)",
                 color: "var(--gold)",
                 fontVariantNumeric: "tabular-nums",
                 letterSpacing: "0.1em",
@@ -417,7 +372,7 @@ const ConvergenceSection = () => {
             </span>
             <div
               style={{
-                width: 40,
+                width: "clamp(20px, 4vw, 40px)",
                 height: 1,
                 background: "rgba(201,168,76,0.2)",
               }}
@@ -425,21 +380,23 @@ const ConvergenceSection = () => {
           </div>
         </div>
 
-        {/* ── Final three words ── */}
+        {/* Final three words */}
         <div
-          className="absolute bottom-20 left-1/2 flex flex-col items-center gap-1 z-10"
+          className="absolute left-1/2 flex flex-col items-center z-10"
           style={{
+            bottom: "clamp(60px, 10vh, 100px)",
             transform: "translateX(-50%)",
+            gap: "clamp(2px, 0.5vw, 6px)",
           }}
         >
           <div
             ref={evolveRef}
             className="font-serif italic text-center"
             style={{
-              fontSize: "clamp(32px, 5vw, 68px)",
+              fontSize: "clamp(32px, 7vw, 80px)",
               fontWeight: 300,
               color: "var(--gold)",
-              letterSpacing: "0.08em",
+              letterSpacing: "0.06em",
               lineHeight: 1.1,
             }}
           >
@@ -449,8 +406,7 @@ const ConvergenceSection = () => {
             ref={orRef}
             className="font-sans uppercase text-center"
             style={{
-              fontSize: "clamp(10px, 1.2vw, 14px)",
-              fontWeight: 300,
+              fontSize: "clamp(9px, 1.2vw, 14px)",
               color: "var(--cream-dim)",
               letterSpacing: "0.5em",
             }}
@@ -461,68 +417,65 @@ const ConvergenceSection = () => {
             ref={remainRef}
             className="font-serif text-center"
             style={{
-              fontSize: "clamp(14px, 1.8vw, 22px)",
+              fontSize: "clamp(13px, 2vw, 24px)",
               fontWeight: 300,
               color: "rgba(192,184,154,0.3)",
               letterSpacing: "0.12em",
             }}
           >
-            remain
+            remain.
           </div>
         </div>
 
-        {/* ── Footer ── */}
+        {/* Footer */}
         <div
-          className="absolute bottom-6 left-1/2 flex flex-col items-center gap-2 z-10"
-          style={{
-            transform: "translateX(-50%)",
-          }}
+          className="absolute bottom-4 left-1/2 flex items-center gap-3 z-10"
+          style={{ transform: "translateX(-50%)" }}
         >
-          <div className="flex items-center gap-4">
-            <div
-              style={{
-                width: 32,
-                height: 1,
-                background: "rgba(201,168,76,0.15)",
-              }}
-            />
-            <span
-              className="font-sans uppercase"
-              style={{
-                fontSize: 8,
-                letterSpacing: "0.35em",
-                color: "rgba(201,168,76,0.25)",
-              }}
-            >
-              © NEXUS Corp 2047 — Classified
-            </span>
-            <div
-              style={{
-                width: 32,
-                height: 1,
-                background: "rgba(201,168,76,0.15)",
-              }}
-            />
-          </div>
+          <div
+            style={{
+              width: "clamp(20px, 4vw, 32px)",
+              height: 1,
+              background: "rgba(201,168,76,0.15)",
+            }}
+          />
+          <span
+            className="font-sans uppercase"
+            style={{
+              fontSize: "clamp(6px, 1vw, 8px)",
+              letterSpacing: "0.3em",
+              color: "rgba(201,168,76,0.25)",
+              whiteSpace: "nowrap",
+            }}
+          >
+            © NEXUS Corp 2047 — Classified
+          </span>
+          <div
+            style={{
+              width: "clamp(20px, 4vw, 32px)",
+              height: 1,
+              background: "rgba(201,168,76,0.15)",
+            }}
+          />
         </div>
 
-        {/* ── Corner brackets ── */}
+        {/* Corner brackets — sm+ */}
         {[
-          { top: 32, left: 32, borderTop: true, borderLeft: true },
-          { top: 32, right: 32, borderTop: true, borderRight: true },
-          { bottom: 32, left: 32, borderBottom: true, borderLeft: true },
-          { bottom: 32, right: 32, borderBottom: true, borderRight: true },
+          { top: 24, left: 24, borderTop: true, borderLeft: true },
+          { top: 24, right: 24, borderTop: true, borderRight: true },
+          { bottom: 24, left: 24, borderBottom: true, borderLeft: true },
+          { bottom: 24, right: 24, borderBottom: true, borderRight: true },
         ].map((corner, i) => (
           <div
             key={i}
-            className="absolute pointer-events-none z-10"
+            className="absolute pointer-events-none hidden sm:block z-10"
             style={{
               ...(corner.top !== undefined ? { top: corner.top } : {}),
               ...(corner.bottom !== undefined ? { bottom: corner.bottom } : {}),
               ...(corner.left !== undefined ? { left: corner.left } : {}),
               ...(corner.right !== undefined ? { right: corner.right } : {}),
-              width: 24,
-              height: 24,
+              width: 20,
+              height: 20,
               borderTop: corner.borderTop
                 ? "1px solid rgba(201,168,76,0.15)"
                 : "none",
@@ -539,9 +492,9 @@ const ConvergenceSection = () => {
           />
         ))}
 
-        {/* ── Side label ── */}
+        {/* Side label — lg only */}
         <div
-          className="absolute left-8 top-1/2 z-10"
+          className="hidden lg:block absolute left-6 top-1/2 z-10"
           style={{
             transform: "translateY(-50%) rotate(-90deg)",
             fontSize: 9,
@@ -556,6 +509,4 @@ const ConvergenceSection = () => {
       </div>
     </section>
   );
-};
-
-export default ConvergenceSection;
+}

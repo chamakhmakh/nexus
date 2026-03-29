@@ -1,8 +1,8 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useEffect, useRef } from "react";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -30,25 +30,21 @@ const stats = [
   },
 ];
 
-const ProblemSection = () => {
+export default function ProblemSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
-
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const numberRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const statementRefs = useRef<(HTMLParagraphElement | null)[]>([]);
-  const highlightRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const subRefs = useRef<(HTMLParagraphElement | null)[]>([]);
-
   const finalRef = useRef<HTMLDivElement>(null);
   const finalLineRef = useRef<HTMLDivElement>(null);
   const flashRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      // we going to hide everything at the start
       gsap.set(cardRefs.current, { autoAlpha: 0, y: 40 });
-      gsap.set(numberRefs.current, { textContent: "0" }); // textContent is a hack to trigger a reflow
+      gsap.set(numberRefs.current, { textContent: "0" });
       gsap.set(finalRef.current, { autoAlpha: 0, y: 30 });
       gsap.set(finalLineRef.current, { scaleX: 0, transformOrigin: "center" });
       gsap.set(flashRef.current, { autoAlpha: 0 });
@@ -61,16 +57,9 @@ const ProblemSection = () => {
           scrub: false,
           pin: true,
           anticipatePin: 1,
-          onLeave: () => {
-            gsap.to(wrapperRef.current, { autoAlpha: 0, duration: 0.4 });
-          },
-          onEnterBack: () => {
-            gsap.to(wrapperRef.current, { autoAlpha: 1, duration: 0.3 });
-          },
         },
       });
 
-      // Intro label
       tl.from(".scene-label", {
         autoAlpha: 0,
         y: -10,
@@ -78,20 +67,15 @@ const ProblemSection = () => {
         ease: "power2.out",
       });
 
-      // Loop through each stat
       stats.forEach((stat, i) => {
-        // Flash in
+        // Flash cut
         tl.to(flashRef.current, {
           autoAlpha: 1,
           duration: 0.08,
           ease: "none",
-        }).to(flashRef.current, {
-          autoAlpha: 0,
-          duration: 0.12,
-          ease: "none",
-        });
+        }).to(flashRef.current, { autoAlpha: 0, duration: 0.12, ease: "none" });
 
-        // Cards appears
+        // Card in
         tl.to(
           cardRefs.current[i],
           {
@@ -104,35 +88,25 @@ const ProblemSection = () => {
         );
 
         // Number counts up
-        const target = parseFloat(stat.number.replace(",", "")); // remove commas
-        const isDecimal = stat.number.includes("."); // check for decimal
-        const isLarge = target > 100; // check for large number
-
+        const target = parseFloat(stat.number);
         tl.to(
           numberRefs.current[i],
           {
             textContent: target,
-            duration: isLarge ? 1.2 : 0.8,
+            duration: 0.8,
             ease: "power2.out",
-            snap: { textContent: isDecimal ? 0.001 : 1 },
+            snap: { textContent: 1 },
             onUpdate: function () {
               const el = numberRefs.current[i];
               if (!el) return;
-
-              const val = parseFloat(el.textContent || "0");
-              if (isLarge) {
-                el.textContent = Math.round(val).toLocaleString();
-              } else if (isDecimal) {
-                el.textContent = val.toFixed(3);
-              } else {
-                el.textContent = Math.round(val).toString();
-              }
+              el.textContent = Math.round(
+                parseFloat(el.textContent || "0"),
+              ).toString();
             },
           },
           "<",
         );
 
-        // Statement fades in
         tl.to(
           statementRefs.current[i],
           {
@@ -144,7 +118,6 @@ const ProblemSection = () => {
           "-=0.5",
         );
 
-        // Sub text
         tl.to(
           subRefs.current[i],
           {
@@ -156,10 +129,8 @@ const ProblemSection = () => {
           "-=0.3",
         );
 
-        // HOLD
         tl.to({}, { duration: 1.2 });
 
-        // Card disappears (except last)
         if (i < stats.length - 1) {
           tl.to(cardRefs.current[i], {
             autoAlpha: 0,
@@ -170,26 +141,18 @@ const ProblemSection = () => {
         }
       });
 
-      // Final flash
+      // Final
       tl.to(
         flashRef.current,
         { autoAlpha: 1, duration: 0.1, ease: "none" },
         "+=0.2",
-      ).to(flashRef.current, {
-        autoAlpha: 0,
-        duration: 0.15,
-        ease: "none",
-      });
-
-      // Hide last stat
-      tl.to(cardRefs.current, {
+      ).to(flashRef.current, { autoAlpha: 0, duration: 0.15, ease: "none" });
+      tl.to(cardRefs.current[stats.length - 1], {
         autoAlpha: 0,
         y: -30,
         duration: 0.5,
         ease: "power3.in",
       });
-
-      // Final reveal 'we decided ...'
       tl.to(
         finalRef.current,
         {
@@ -208,8 +171,6 @@ const ProblemSection = () => {
         },
         "-=0.4",
       );
-
-      // Hold at the end
       tl.to({}, { duration: 1.5 });
     }, sectionRef);
 
@@ -223,48 +184,65 @@ const ProblemSection = () => {
         className="relative w-full h-screen flex flex-col items-center justify-center overflow-hidden"
         style={{ background: "var(--black)" }}
       >
-        {/* ── White flash overlay ── */}
+        {/* Flash */}
         <div
           ref={flashRef}
           className="absolute inset-0 pointer-events-none z-50"
-          style={{
-            background: "var(--black)",
-            opacity: 0,
-          }}
+          style={{ background: "var(--black)", opacity: 0 }}
         />
 
-        {/* ── Scene label ── */}
+        {/* ── Scene label — always one line ── */}
         <div
-          className="scene-label absolute top-10 left-1/2 flex items-center gap-3"
-          style={{ transform: "translateX(-50%)" }}
+          className="scene-label absolute top-8 sm:top-10 left-1/2 z-20 flex items-center gap-2"
+          style={{ transform: "translateX(-50%)", whiteSpace: "nowrap" }}
         >
-          <div className="gold-line" />
-          <span
-            className="font-sans uppercase text-gold"
+          <div
             style={{
-              fontSize: 10,
-              letterSpacing: "0.4em",
+              width: "clamp(20px, 4vw, 60px)",
+              height: 1,
+              background:
+                "linear-gradient(90deg, transparent, var(--gold-dim))",
+            }}
+          />
+          <span
+            className="font-sans uppercase"
+            style={{
+              fontSize: "clamp(8px, 1.8vw, 10px)",
+              letterSpacing: "clamp(0.2em, 0.4em, 0.4em)",
               color: "var(--gold-dim)",
+              whiteSpace: "nowrap",
             }}
           >
             The Problem
           </span>
-          <div className="gold-line" />
+          <div
+            style={{
+              width: "clamp(20px, 4vw, 60px)",
+              height: 1,
+              background:
+                "linear-gradient(90deg, var(--gold-dim), transparent)",
+            }}
+          />
         </div>
 
-        {/* ── Stat cards — stacked, shown one at a time ── */}
+        {/* ── Stat cards ── */}
         {stats.map((stat, i) => (
           <div
             key={i}
             ref={(el) => {
               cardRefs.current[i] = el;
             }}
-            className="absolute inset-0 flex flex-col items-center justify-center px-8 text-center"
+            className="absolute inset-0 flex flex-col items-center justify-center text-center"
+            style={{ padding: "0 clamp(20px, 6vw, 80px)" }}
           >
-            {/* Giant number */}
+            {/* Number + unit row */}
             <div
-              className="flex items-end gap-3 mb-6"
-              style={{ lineHeight: 1 }}
+              className="flex items-end justify-center"
+              style={{
+                gap: "clamp(8px, 2vw, 16px)",
+                lineHeight: 1,
+                marginBottom: "clamp(16px, 4vw, 32px)",
+              }}
             >
               <span
                 ref={(el) => {
@@ -272,7 +250,7 @@ const ProblemSection = () => {
                 }}
                 className="font-serif"
                 style={{
-                  fontSize: "clamp(80px, 16vw, 200px)",
+                  fontSize: "clamp(72px, 22vw, 220px)",
                   fontWeight: 300,
                   color: "var(--cream)",
                   lineHeight: 1,
@@ -282,11 +260,12 @@ const ProblemSection = () => {
                 0
               </span>
               <span
-                className="font-sans font-light pb-3"
+                className="font-sans font-light"
                 style={{
-                  fontSize: "clamp(18px, 3vw, 36px)",
+                  fontSize: "clamp(14px, 4vw, 40px)",
                   color: "var(--gold)",
-                  letterSpacing: "0.2em",
+                  letterSpacing: "0.15em",
+                  paddingBottom: "clamp(8px, 2vw, 18px)",
                 }}
               >
                 {stat.unit}
@@ -300,37 +279,29 @@ const ProblemSection = () => {
               }}
               className="font-serif italic"
               style={{
-                fontSize: "clamp(20px, 3vw, 38px)",
+                fontSize: "clamp(15px, 3.2vw, 38px)",
                 fontWeight: 300,
-                color: "rgba(245,240,232,0.5)",
-                maxWidth: 700,
-                lineHeight: 1.4,
+                color: "rgba(245,240,232,0.45)",
+                maxWidth: "clamp(280px, 75vw, 720px)",
+                lineHeight: 1.45,
                 opacity: 0,
                 transform: "translateY(20px)",
               }}
             >
               {stat.statement}{" "}
-              <span
-                ref={(el) => {
-                  highlightRefs.current[i] = el;
-                }}
-                style={{
-                  color: "var(--cream)",
-                }}
-              >
-                {stat.highlight}
-              </span>
+              <span style={{ color: "var(--cream)" }}>{stat.highlight}</span>
             </p>
 
-            {/* Sub text */}
+            {/* Sub */}
             <p
               ref={(el) => {
                 subRefs.current[i] = el;
               }}
-              className="font-sans mt-6 uppercase"
+              className="font-sans uppercase"
               style={{
-                fontSize: 11,
-                letterSpacing: "0.3em",
+                marginTop: "clamp(12px, 3vw, 28px)",
+                fontSize: "clamp(8px, 1.5vw, 11px)",
+                letterSpacing: "clamp(0.15em, 0.3em, 0.3em)",
                 color: "var(--gold-dim)",
                 opacity: 0,
                 transform: "translateY(10px)",
@@ -338,54 +309,37 @@ const ProblemSection = () => {
             >
               {stat.sub}
             </p>
-
-            {/* Thin decorative line under number */}
-            <div
-              className="asbolute"
-              style={{
-                bottom: "calc(50% - 160px)",
-                left: "50%",
-                transform: "translateX(-50%)",
-                width: 1,
-                height: 40,
-                background:
-                  "linear-gradient(to bottom, rgba(201,168,76,0.4), transparent)",
-              }}
-            />
           </div>
         ))}
 
-        {/* ── Final line ── */}
+        {/* ── Final reveal ── */}
         <div
           ref={finalRef}
-          className="absolute inset-0 flex flex-col items-center justify-center text-center px-8"
-          style={{
-            opacity: 0,
-          }}
+          className="absolute inset-0 flex flex-col items-center justify-center text-center"
+          style={{ padding: "0 clamp(20px, 6vw, 80px)", opacity: 0 }}
         >
           <p
             className="font-serif"
             style={{
-              fontSize: "clamp(36px, 6vw, 90px)",
+              fontSize: "clamp(28px, 7vw, 96px)",
               fontWeight: 300,
               color: "var(--cream)",
-              letterSpacing: "0.4em",
+              letterSpacing: "0.03em",
               lineHeight: 1.2,
-              maxWidth: 800,
+              maxWidth: "clamp(280px, 80vw, 860px)",
             }}
           >
             We decided{" "}
             <span className="italic" style={{ color: "var(--gold)" }}>
-              to fix that
+              to fix that.
             </span>
           </p>
 
-          {/* Gold line under final text */}
           <div
             ref={finalLineRef}
-            className="mt-8"
             style={{
-              width: "clamp(80px, 12vw, 180px)",
+              marginTop: "clamp(20px, 4vw, 40px)",
+              width: "clamp(60px, 12vw, 180px)",
               height: "1px",
               background:
                 "linear-gradient(90deg, transparent, var(--gold), transparent)",
@@ -393,34 +347,35 @@ const ProblemSection = () => {
           />
 
           <p
-            className="font-sans mt-6 uppercase"
+            className="font-sans uppercase"
             style={{
-              fontSize: 10,
-              letterSpacing: "0.4em",
-              color: "var(--gold)",
+              marginTop: "clamp(12px, 2.5vw, 24px)",
+              fontSize: "clamp(8px, 1.5vw, 10px)",
+              letterSpacing: "clamp(0.2em, 0.4em, 0.4em)",
+              color: "var(--gold-dim)",
             }}
           >
             Scroll to continue
           </p>
         </div>
 
-        {/* ── Corner brackets ── */}
+        {/* Corner brackets — sm+ only */}
         {[
-          { top: 32, left: 32, borderTop: true, borderLeft: true },
-          { top: 32, right: 32, borderTop: true, borderRight: true },
-          { bottom: 32, left: 32, borderBottom: true, borderLeft: true },
-          { bottom: 32, right: 32, borderBottom: true, borderRight: true },
+          { top: 24, left: 24, borderTop: true, borderLeft: true },
+          { top: 24, right: 24, borderTop: true, borderRight: true },
+          { bottom: 24, left: 24, borderBottom: true, borderLeft: true },
+          { bottom: 24, right: 24, borderBottom: true, borderRight: true },
         ].map((corner, i) => (
           <div
             key={i}
-            className="absolute pointer-events-none"
+            className="absolute pointer-events-none hidden sm:block"
             style={{
               ...(corner.top !== undefined ? { top: corner.top } : {}),
               ...(corner.bottom !== undefined ? { bottom: corner.bottom } : {}),
               ...(corner.left !== undefined ? { left: corner.left } : {}),
               ...(corner.right !== undefined ? { right: corner.right } : {}),
-              width: 24,
-              height: 24,
+              width: 20,
+              height: 20,
               borderTop: corner.borderTop
                 ? "1px solid rgba(201,168,76,0.15)"
                 : "none",
@@ -437,29 +392,9 @@ const ProblemSection = () => {
           />
         ))}
 
+        {/* Side label — lg only */}
         <div
-          className="absolute right-10 top-1/2 flex flex-col gap-3"
-          style={{
-            transform: "translateY(-50%)",
-          }}
-        >
-          {stats.map((_, i) => (
-            <div
-              key={i}
-              className="rounded-full"
-              style={{
-                width: 4,
-                height: 4,
-                background: "rgba(201,168,76,0.3)",
-                boxShadow: "0 0 6px rgba(201,168,76,0.2)",
-              }}
-            />
-          ))}
-        </div>
-
-        {/* ── Side label ── */}
-        <div
-          className="absolute left-8 top-1/2"
+          className="absolute left-6 top-1/2 hidden lg:block"
           style={{
             transform: "translateY(-50%) rotate(-90deg)",
             fontSize: 9,
@@ -474,6 +409,4 @@ const ProblemSection = () => {
       </div>
     </section>
   );
-};
-
-export default ProblemSection;
+}
