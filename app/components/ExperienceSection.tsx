@@ -117,7 +117,7 @@ const ExperienceSection = () => {
           trigger: wrapperRef.current,
           start: "top top",
           end: "+=600%",
-          scrub: true,
+          scrub: 2,
           pin: true,
           anticipatePin: 1,
         },

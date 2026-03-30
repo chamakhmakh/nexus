@@ -126,7 +126,7 @@ export default function ConvergenceSection() {
           trigger: wrapperRef.current,
           start: "top top",
           end: "+=700%",
-          scrub: true,
+          scrub: 2,
           pin: true,
           anticipatePin: 1,
         },
